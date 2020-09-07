@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        .products {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-gap: 20px;
+        }
+
+        .card {
+            /* Add shadows to create the "card" effect */
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            transition: 0.3s;
+        }
+
+        /* On mouse-over, add a deeper shadow */
+        .card:hover {
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+        }
+
+        /* Add some padding inside the card container */
+        .container {
+            padding: 2px 16px;
+        }
+    </style>
+</head>
+<body>
+    <form id="form">
+        <label>Buscar</label>
+        <input name="search" />
+        <input type="submit" />
+    </form>
+
+    <div class="products">
+        
+    </div>
+
+    <script>
+        const socket = new WebSocket('ws://localhost:8080?type=client');
+        const form = document.querySelector('form')
+        const searchText = document.querySelector('input[name=search]')
+        const products = document.querySelector('.products')
+
+        const getItem = (item) => {
+            return `
+                <div class="card">
+                    <img src="${item.image}" alt="Avatar" style="width:100%">
+                    <div class="container">
+                        <h4><b>${item.title}</b></h4>
+                        <p>${item.price}</p>
+                    </div>
+                </div>
+            `
+        }
+
+        form.onsubmit = function(e){
+            e.preventDefault()
+
+            socket.send(JSON.stringify({
+                type: 'send_search',
+                value: searchText.value
+            }))
+
+            products.innerHTML = ''
+        }
+
+        socket.addEventListener('message', function(event){
+            const data = JSON.parse(event.data)
+
+            console.log(data)
+
+            if(data.type === 'result-product'){
+                console.log('llego el resultado')
+
+                for(let i in data.products){
+                    products.innerHTML += getItem(data.products[i])
+                }
+            }
+        })
+    </script>
+</body>
+</html>
